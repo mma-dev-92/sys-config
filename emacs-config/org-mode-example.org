@@ -1,0 +1,75 @@
+* Org-Mode Notes
+** Basics
+*** Headers
+    - To insert a header you have to prefix it with n `*` characters. The number of `*` will determine the 
+      level of your header. 
+    - To toggle the current header, press TAB. To toggle all the headers, press SHIFT + TAB.
+    - To create a header of order equal to the current header *after the current section content* 
+      press C + ENTER 
+    - To To create a header of order equal to the current header *before the current section content* press 
+      M + ENTER 
+    - To move headers (with all child headers and their content) press M + ARROW ("M-j" or "M-k" in the 
+      evil mode)
+*** Links
+    - You can insert a link with "C-c C-l", for example [[https://leetcode.com][LeetCode]]
+    - To open the link (with the cursor), press "C-c C-o"
+*** Bullet Point List
+    - To create bullet point list, just use the "-" to create bullet items
+    - To create next bullet item, press "M-ENTER
+      - You can increase the indentation level by pressing TAB key after the "M-ENTER"
+      - And "M-ENTER" will work the same :)
+*** Enumerated List
+    1. You can create enumerated list with "<number>."
+    2. By "M-ENTER" you can create next element of that list
+*** Tables
+    I can create tables  inside org-mode. Columns are separated with "|" sign. After typing the column names you can go to the next row by pressing enter, values in each row should be separated by "|", after value in a give column is inserted you can just press TAB, to abjust the columns width to the content. To create a separator row, just start new row with "|" sign, and then press TAB.
+
+    | Name   | Age | Nationality |
+    |--------+-----+-------------|
+    | Maciej |  32 | Poland      |
+    | Hanna  |  27 | Poland      |
+    |--------+-----+-------------|
+    
+*** Check List
+    It is possible to create a check lists, for example things I have to buy today.
+
+    - [X] Bread
+    - [X] Water
+    - [ ] Ham
+    - [ ] Created with SHIFT-M-ENTER
+
+    You can check them by running the "org-toggle-checkbox" command or by default shortcut "C-c C-x C-b".
+    By running this command you are changing the "state" of the checkbox. To continue adding list items with
+    checkboxes, press "SHIFT-M-ENTER". You can also create first bullet point (with no text) and press
+    "SHIFT-M-ENTER", then it will create the checkboxes for ya!
+
+    - 
+    - [ ] 
+*** Formating
+    - To *bold* a portion of a text, just surround it with `*`
+** Source Code in Org-Mode!
+    The syntax is "#+begin_src <programming-language-mode>" + your code + "#+end_src".
+
+   #+begin_src python
+   def binary_search(arr: list[int], target: int) -> bool:
+       l, r = 0, len(arr) - 1
+       m = (r + l) // 2
+       while l < r:
+           if arr[m] < target:
+	       r = m
+	   elif arr[m] > target:
+	       l = m + 1
+	   else:
+	       return True
+	   m = (r + l) // 2
+
+       return False
+   #+end_src
+   
+** TODO LISTS
+    You can create a TODO Lists in Org-Mode. Just Create a bunch of headers and start them with TODO as shown
+    in the example below. To change the status from TODO to DONE, just use the shortcut "C-c C-t".
+*** DONE Test get_move endpoint
+    Description of the task, what to test, what edge cases are important, ...
+*** TODO Optimize search algorithm implemented in the module X
+    Descripion, DoD, how fast it should be, and so on...

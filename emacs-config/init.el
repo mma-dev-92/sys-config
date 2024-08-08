@@ -9,8 +9,6 @@
 
 (setq visible-bell t)                                     ; Set up the "visual" alarm bell
 
-(set-face-attribute 'default nil :font "Fira Code Retina" :height 170)
-
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
 ;;Initialize package sources
@@ -54,11 +52,22 @@
 
 ;Be very carefull not to add the same hook multiple times (performance).
 
+;; Font Configuration ----------------------------------------------------------
+(defvar mma/default-font-size 180)
 
-;;This is the package that can display keys I am hitting
+;; Default font and font size
+(set-face-attribute 'default nil :font "Fira Code Retina" :height mma/default-font-size)
+
+;; Set the fixed pitch face
+(set-face-attribute 'fixed-pitch nil :font "Fira Code Retina" :height 180)
+
+;; Set the variable pitch face
+(set-face-attribute 'variable-pitch nil :font "Cantarell" :height 210 :weight 'regular)
+
+;; This is the package that can display keys I am hitting
 (use-package command-log-mode)
 
-;;This is a must have - very usefull for everything, on Ubuntu it is possible to install it via apt install
+;; This is a must have - very usefull for everything, on Ubuntu it is possible to install it via apt install
 (use-package ivy
   :diminish
   :config
@@ -224,3 +233,89 @@
 
 ;TODO: remove the emacs backup files from the ivy search
 
+;;AWERSOME EMACS (COUNSEL-PROJECTILE) FUNCTIONALITY!!!
+;counsel-projectile-rg uses ripgrep to find a given string in all project files
+;C-c C-o will transform the pop-up buffer containing the search results
+;into a "normal" buffer that wont go away, it still will be possible to go up and down
+;and of course to navigate to the given found position by hitting ENTER
+;TODO: create a key-binding for it, I will use it probably very often
+
+(use-package magit
+  :custom
+  (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1));display diff in the same window
+
+;evil-magit is injected in evil-collections
+
+;;The most important command for the magit package is magit-status (X-x g)
+;;s - stage one file, u - unstage one file
+;;S - stage all files, U - unstage all files
+;it is also possible to partially stage the change (by selecting, what lines I want to stage
+;and pressing s, the same is possible for the unstage operation)
+
+;if I want to commit what is staged, I need to press cc, then I need to type the commit message
+;C-c C-k to exit the "creating a commit process"
+;C-c C-c to create a new commit with given commit message
+
+;TODO: read about the spinoff, and also read about how to configure emacs to type the ssh-key passwd
+;inside the emacs, generaly, it is a good idea to learn this thing :)0
+
+;to push to remote, just P p
+
+;after magit-status, by hitting ? available options / operations will pop up
+
+;;ORG-MODE!!!
+
+(use-package org)
+
+;TAB - toggle the current indent
+;SHIFT + TAB - change the visibility level
+;C + ENTER creates header of order equal to the current header but after the current section content
+;M + ENTER creates header of order equal to the current header before the current section content
+;M + ARROW (J | K) will move headers up and down
+;C c l - insert a link (to anything, can be http, https, latex, ...)
+;C c o - open a link
+
+(defun mma/org-mode-setup ()
+  (org-indent-mode 1)
+  (variable-pitch-mode 1)
+  (visual-line-mode 1)
+  (setq left-margin-width 20)
+  (setq right-margin-width 20))
+
+(use-package org
+  :hook (org-mode . mma/org-mode-setup)
+  :config
+  (setq org-ellipsis " ▾"
+	org-hide-emphasis-markers t))
+
+(use-package org-bullets
+  :after org
+  :hook (org-mode . org-bullets-mode)
+  :custom
+  (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+
+;;Font size adjustment to the heading levels + set font to cantarell, so the documents look like documents
+  (dolist (face '((org-level-1 . 1.2)
+                  (org-level-2 . 1.1)
+                  (org-level-3 . 1.05)
+                  (org-level-4 . 1.0)
+                  (org-level-5 . 1.1)
+                  (org-level-6 . 1.1)
+                  (org-level-7 . 1.1)
+                  (org-level-8 . 1.1)))
+    (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
+
+(set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
+(set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
+(set-face-attribute 'org-table nil   :inherit '(shadow fixed-pitch))
+(set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
+(set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
+(set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
+(set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch)
+
+(defun mma/org-mode-visual-fill () 
+   (setq visual-fill-column-center-text t)
+   (visual-fill-column-mode 1))
+
+(use-package visual-fill-column
+  :hook (org-mode . mma/org-mode-visual-fill))
