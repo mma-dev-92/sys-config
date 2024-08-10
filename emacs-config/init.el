@@ -266,7 +266,6 @@
 ;;ORG-MODE!!!
 
 (use-package org)
-
 ;TAB - toggle the current indent
 ;SHIFT + TAB - change the visibility level
 ;C + ENTER creates header of order equal to the current header but after the current section content
@@ -278,15 +277,13 @@
 (defun mma/org-mode-setup ()
   (org-indent-mode 1)
   (variable-pitch-mode 1)
-  (visual-line-mode 1)
-  (setq left-margin-width 20)
-  (setq right-margin-width 20))
+  (visual-line-mode 1))
 
 (use-package org
   :hook (org-mode . mma/org-mode-setup)
   :config
   (setq org-ellipsis " ▾"
-	org-hide-emphasis-markers t))
+	org-hide-emphasis-markers nil))
 
 (use-package org-bullets
   :after org
@@ -299,11 +296,11 @@
                   (org-level-2 . 1.1)
                   (org-level-3 . 1.05)
                   (org-level-4 . 1.0)
-                  (org-level-5 . 1.1)
-                  (org-level-6 . 1.1)
-                  (org-level-7 . 1.1)
-                  (org-level-8 . 1.1)))
-    (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
+                  (org-level-5 . 0.9)
+                  (org-level-6 . 0.9)
+                  (org-level-7 . 0.9)
+
+    (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))))
 
 (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
 (set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
@@ -313,8 +310,9 @@
 (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
 (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch)
 
-(defun mma/org-mode-visual-fill () 
+(defun mma/org-mode-visual-fill ()
    (setq visual-fill-column-center-text t)
+   (setq visual-fill-column-extra-text-width '(40 . 40))
    (visual-fill-column-mode 1))
 
 (use-package visual-fill-column
