@@ -1,8 +1,28 @@
-(defvar mma/org-config-path "/home/maciek/Projects/sys-config/emacs-config/config.org")
+#+titlMy Emacs Configuration
+#+PROPERTY: header-args:emacs-lisp :tangle ~/Projects/sys-config/emacs-config/init.el
+* Setup Configuration File
+** set path to the current file
 
+Provide abs path to this *.org file (important for auto-tangle-on-save).
+
+#+begin_src emacs-lisp
+(defvar mma/org-config-path "/home/maciek/Projects/sys-config/emacs-config/config.org")
+#+end_src
+
+#+RESULTS:
+: mma/org-config-path
+
+** font sizes
+
+Set font sizes (probably it depends on your dpi).
+
+#+begin_src emacs-lisp
 (defvar mma/default-font-size 180)
 (defvar mma/documents-font-size 210)
+#+end_src
 
+* Setup Packages & Repos
+#+begin_src emacs-lisp
 (require 'package)
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
                          ("org" . "https://orgmode.org/elpa/")
@@ -20,7 +40,15 @@
 ;; Load use-package
 (require 'use-package)
 (setq use-package-always-ensure t)
+#+end_src
 
+#+RESULTS:
+: t
+
+* UI Configuration
+** basic behavior
+
+#+begin_src emacs-lisp
 ;remove the startup message (make emacs welcome screen disapear)
 (setq inhibit-startup-message t)
 ;disable scroll bar
@@ -42,7 +70,12 @@
               treemacs-mode-hook
 		eshell-mode-hook))
   (add-hook mode(lambda() (display-line-numbers-mode 0))))
+#+end_src
 
+#+RESULTS:
+** eshell customization
+
+#+begin_src emacs-lisp
 (use-package eshell-prompt-extras
   :ensure t
   :after eshell
@@ -51,11 +84,25 @@
     (require 'eshell-prompt-extras)
     (setq eshell-highlight-prompt t
           eshell-prompt-function 'epe-theme-lambda)))
+#+end_src
 
+#+RESULTS:
+: t
+
+* Themes & Fonts
+** fonts
+
+#+begin_src emacs-lisp 
 (set-face-attribute 'default nil :font "Fira Code Retina" :height mma/default-font-size)
 (set-face-attribute 'fixed-pitch nil :font "Fira Code Retina" :height mma/default-font-size)
 (set-face-attribute 'variable-pitch nil :font "Cantarell" :height mma/documents-font-size :weight 'regular)
+#+end_src
 
+#+RESULTS:
+
+** doom-themes
+
+#+begin_src emacs-lisp
 (use-package doom-themes
   :config
   ;; Global settings (defaults)
@@ -68,7 +115,14 @@
   (doom-themes-neotree-config)
   ;; Corrects (and improves) org-mode's native fontification.
   (doom-themes-org-config))
+#+end_src
 
+#+RESULTS:
+: t
+
+** doom-modeline
+
+#+begin_src emacs-lisp
 (use-package doom-modeline
   :init (doom-modeline-mode 1)
   :custom (doom-modeline-height 50))
@@ -76,9 +130,23 @@
 (setq doom-modeline-icon t)
 (setq doom-modeline-major-mode-icon t)
 (setq doom-modeline-major-mode-color-icon t)
+#+end_src
 
+#+RESULTS:
+: t
+
+** all-the-icons
+
+#+begin_src emacs-lisp
 (use-package all-the-icons)
+#+end_src
 
+#+RESULTS:
+
+* Navigation
+** ivy
+
+#+begin_src emacs-lisp
 (use-package ivy
   :diminish
   :config
@@ -96,28 +164,62 @@
          :map ivy-reverse-i-search-map
          ("C-k" . ivy-previous-line)
          ("C-d" . ivy-reverse-i-search-kill)))
+#+end_src
 
+#+RESULTS:
+: ivy-reverse-i-search-kill
+
+** ivy-rich
+
+#+begin_src emacs-lisp
 (use-package ivy-rich
   :init
   (ivy-rich-mode t))
+#+end_src
 
+#+RESULTS:
+
+** ivy keybindings
+
+#+begin_src emacs-lisp
 (global-set-key (kbd "C-x C-f") 'counsel-find-file)
 (global-set-key (kbd "C-x C-b") 'counsel-switch-buffer)
 (global-set-key (kbd "M-x") 'counsel-M-x)
 (global-set-key (kbd "C-x b") 'counsel-ibuffer)
+#+end_src
 
+#+RESULTS:
+: counsel-ibuffer
+
+** which-key
+
+#+begin_src emacs-lisp
 ;Hint: use C-h n and C-h p to navigate the pop-up with key bindings
 (use-package which-key
   :init (which-key-mode)
   :diminish which-key-mode
   :config
   (setq which-key-idle-delay 0.3))
+#+end_src
 
+#+RESULTS:
+: t
+
+** counsel 
+
+#+begin_src emacs-lisp
 (use-package counsel
   :bind (
 	 :map minibuffer-local-map
 	 ("C-r" . "counsel-minibuffer-history")))
+#+end_src
 
+#+RESULTS:
+: counsel-minibuffer-history
+
+** helpful
+
+#+begin_src emacs-lisp
 (use-package helpful
   :custom
   (counsel-describe-function-function #'helpful-callable)
@@ -127,7 +229,15 @@
   ([remap describe-command] . helpful-command)
   ([remap describe-variable] . counsel-describe-variable)
   ([remap describe-key] . helpful-key))
+#+end_src
 
+#+RESULTS:
+: helpful-key
+
+* Vim Key Bindings
+** evil
+
+#+begin_src emacs-lisp
 (use-package evil
   :init
   (setq evil-want-integration t)
@@ -143,7 +253,14 @@
   (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
   (evil-set-initial-state 'messages-buffer-mode 'normal)
   (evil-set-initial-state 'dashboard-mode 'normal))
+#+end_src
 
+#+RESULTS:
+: t
+
+** evil-collection
+
+#+begin_src emacs-lisp
 ;;There is a variable evil-collection-mode-list, that contains the list of all modes
 ;;to which evil-collection defines key-bindings, if some bindings are not satisfying,
 ;;just remove the mode from the evil-collection-mode-list.
@@ -151,7 +268,14 @@
   :after evil
   :config
   (evil-collection-init))
+#+end_src
 
+#+RESULTS:
+: t
+
+* Custom Namespace
+
+#+begin_src emacs-lisp
 (use-package general
   :config
   (general-evil-setup t)
@@ -164,20 +288,37 @@
   (mma/leader-keys
     "tt" '(counsel-load-theme :which-key "choose theme")
     "ts" '(hydra-text-scale/body :which-key "scale text")))
+#+end_src
 
+#+RESULTS:
+: t
+
+* Org Mode
+** org-mode setup
+
+#+begin_src emacs-lisp
 ;; Basic indentation and line-breaking behavior
 (defun mma/org-mode-setup ()
   (setq org-adapt-indentation t)
   (org-indent-mode t)
   (variable-pitch-mode 1)
   (visual-line-mode 1))
+#+end_src
 
+#+begin_src emacs-lisp
 ;; Replace list hyphen with dot
 (defun mma/org-bullet-list-setup ()
   (font-lock-add-keywords 'org-mode
                           '(("^ *\\([-]\\) "
                              (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•")))))))
+#+end_src
 
+#+RESULTS:
+: mma/org-font-setup
+
+** org
+
+#+begin_src emacs-lisp
 (use-package org
   :hook (org-mode . mma/org-mode-setup)
   :hook (org-mode . mma/org-bullet-list-setup)
@@ -197,7 +338,14 @@
   (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
   (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
   (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
+#+end_src
 
+#+RESULTS:
+| (lambda nil (add-hook 'after-save-hook #'mma/org-babel-tangle-config)) | org-tempo-setup | org-bullets-mode | #[0 \300\301\302\303\304$\207 [add-hook change-major-mode-hook org-show-all append local] 5] | #[0 \300\301\302\303\304$\207 [add-hook change-major-mode-hook org-babel-show-result-all append local] 5] | org-babel-result-hide-spec | org-babel-hide-all-hashes | #[0 \301\211\207 [imenu-create-index-function org-imenu-get-tree] 2] | mma/org-mode-visual-fill | mma/org-font-setup | mma/org-mode-setup | (lambda nil (display-line-numbers-mode 0)) |
+
+** org-bullets
+
+#+begin_src emacs-lisp
 (use-package org-bullets
   :after org
   :hook (org-mode . org-bullets-mode)
@@ -214,7 +362,13 @@
                   (org-level-7 . 1.0)
 
     (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))))
+#+end_src
 
+#+RESULTS:
+
+** visual-fill-column
+
+#+begin_src emacs-lisp
 (defun mma/org-mode-visual-fill ()
    (setq visual-fill-column-center-text t)
    (setq visual-fill-column-extra-text-width '(30 . 30))
@@ -222,7 +376,14 @@
 
 (use-package visual-fill-column
   :hook (org-mode . mma/org-mode-visual-fill))
+#+end_src
 
+#+RESULTS:
+| mma/org-mode-visual-fill | org-bullets-mode | mma/org-font-setup | mma/org-mode-setup | #[0 \300\301\302\303\304$\207 [add-hook change-major-mode-hook org-show-all append local] 5] | #[0 \300\301\302\303\304$\207 [add-hook change-major-mode-hook org-babel-show-result-all append local] 5] | org-babel-result-hide-spec | org-babel-hide-all-hashes | #[0 \301\211\207 [imenu-create-index-function org-imenu-get-tree] 2] | (lambda nil (display-line-numbers-mode 0)) |
+
+** org-babel
+
+#+begin_src emacs-lisp
 (org-babel-do-load-languages
   'org-babel-load-languages
   '((emacs-lisp .t)
@@ -231,18 +392,41 @@
 (push '("conf-unix" . conf-unix) org-src-lang-modes)
 ;; python command for evaluating python code blocks
 (setq org-babel-python-command "/usr/bin/python3.10")
+#+end_src
 
+#+RESULTS:
+: /usr/bin/python3
+
+** org-tempo code block temlates
+
+This allows for the shortcuts for the source-code block insertion. For example to insert python source code block, just insert "<py" and then TAB.
+
+#+begin_src emacs-lisp
 (require 'org-tempo)
 
 (add-to-list 'org-structure-template-alist '("sh" . "src shell"))
 (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
 (add-to-list 'org-structure-template-alist '("py" . "src python"))
 (add-to-list 'org-structure-template-alist '("conf" . "src conf-unix"))
+#+end_src
 
+#+RESULTS:
+: ((conf . src conf-unix) (py . src python) (el . src emacs-lisp) (sh . src shell) (a . export ascii) (c . center) (C . comment) (e . example) (E . export) (h . export html) (l . export latex) (q . quote) (s . src) (v . verse))
+* Dev
+** rainbow-delimiters
+
+#+begin_src emacs-lisp
 ;If any programming language mode starts (prog-mode), enable rainbow mode
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
+#+end_src
 
+#+RESULTS:
+| rainbow-delimiters-mode |
+
+** projectile
+
+#+begin_src emacs-lisp
 ;Projectile key-bindings can be found with C-c p (as I have set the projectile-command-map below)
 (use-package projectile
   :diminish projectile-mode
@@ -254,16 +438,28 @@
   (when (file-directory-p "~/Projects")
     (setq projectile-project-search-path '("~/Projects")))
   (setq projectile-switch-project-action #'projectile-dired))
+#+end_src
 
+** projectile-counsel
+
+#+begin_src emacs-lisp
 ;After C-c p p and hitting M-o there are many actions, that can be invoked on a project
 (use-package counsel-projectile
   :config (counsel-projectile-mode))
+#+end_src
 
+** magit
+
+#+begin_src emacs-lisp
 (use-package magit
   :custom
   ;; display diff in the same window
   (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
+#+end_src
 
+** lsp-mode (language servers)
+
+#+begin_src emacs-lisp
 ;; show nav at the top of each project file
 (defun mma/lsp-mode-setup ()
   (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
@@ -286,7 +482,25 @@
   :after lsp)
 
 (use-package lsp-ivy)
+#+end_src
 
+#+RESULTS:
+
+Usefull tips:
+- To use lsp-mode you need to install the langauge server first (for any language, like python, C, C++, Rust, ...)
+- Next, you can try the following functionalities
+  - "completion-at-point" is an ivy-like autocompletion (navigate like in any ivy buffer, TAB to confirm currently selected)
+  - when cursor is on the function / variable, documentation is displayed in the minibuffer, if the function is overloaded, you can use "M-n", M-p" to switch to different function implementation docs
+  - "C-c l g" - lsp go-to
+  - "C-c l r" -lsp refactor menu
+  - "flymake-show-diagnostic-buffer" - shows the diagnostics buffer for the currently opened buffer
+  - for highlited line of code, if something is wrong (for example variable is never used), you can go ther with the cursor, the bulb symbol will appear in the minibuffer, press "C-c l a" to get the menu of the code actions, that can fix the problem
+  - "C-c l = =" - "lsp-format-buffer" it will format the file (however probably *there are better options to format the code created as dedicated packages / linters for specific languages*)
+  - "lsp-treemacs-symbols" command pops up the cirrent buffer code structure tree (it can be used to easily navigate throught the code)
+  - "lsp-treemacs" just opens the dir tree (after specifying the tree root)
+** company-mode (for nice autocompletion)
+
+#+begin_src emacs-lisp
 (use-package company
   :after lsp-mode
   :hook (prog-mode . company-mode)
@@ -300,14 +514,23 @@
   
 (use-package company-box
   :hook (company-mode . company-box-mode))
+#+end_src
 
+** python-dev 
+*** general setup
+
+#+begin_src emacs-lisp
 (use-package python-mode
   :ensure nil
   :hook
   (python-mode . lsp-deferred)
   :custom
   (python-shell-interpreter "/usr/bin/python3.10"))
+#+end_src
 
+*** virtual envirnoment setup
+
+#+begin_src emacs-lisp
 ;; virtual envirnoment management
 (use-package pyvenv
   :ensure t
@@ -319,6 +542,39 @@
 ;; but to use local python interpreter from the selected .venv
 (setq lsp-pylsp-python-executable-cmd "python")
 
+#+end_src
+
+#+RESULTS:
+| mma/activate-venv-in-shell | (lambda nil (display-line-numbers-mode 0)) |
+
+* TODO Tramp mode
+* Tangling Configuration File
+** Tangle All Code Blocks
+
+Apply the same configuration to every block.
+
+#+begin_src org :tangle no
+#+PROPERTY: header-args:emacs-lisp :tangle <file_path> :mkdirp yes
+#+end_src
+
+Command above will allow us to set auto-tangle each emacs-lisp code block in this file to the same file every time the "org-babel-tangle" command is executed in this buffer. Of course this approach require to run this command every time, when any emacs-lisp code block has been changed, so it is not the best idea. 
+
+The ~:mkdirp yes~ is allowing to create all the parent directories (if they do not exist already) to match the specified filepath.
+
+** Tangle Configuration File
+
+#+begin_src emacs-lisp :tangle no
+(org-babel-tangle)
+(org-babel-tangle-file "~/Projects/sys-config/emacs-config/new-init.el")
+#+end_src
+
+#+RESULTS:
+
+Those two commands above will tangle all the files to the file with a given filepath.
+
+** Auto Tangle Configuration Files
+
+#+begin_src emacs-lisp
 ;update dynamically given emacs *.el file on save to the path specified in the #+PROPERTY at the beginning of the file
 (defun mma/org-babel-tangle-config ()
   (when (string-equal (buffer-file-name)
@@ -328,3 +584,64 @@
       (org-babel-tangle))))
 
 (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'mma/org-babel-tangle-config)))
+#+end_src
+
+* Other Applications
+** Some App
+I can have not only my emacs config in one org-mode file, but also other configuration files (other *.ini files in my system). Below I am using the ~:tangle~ parameter with path where the code block should be tangled + by ~mkdrip yes~ I am saying: "even if there is no such path as the path specified in the ~:tangle~ parameter, please create it for me (even if you have to create parent directories).
+
+#+begin_src conf-unix :tangle no
+[section one]
+val1=32
+val2=45
+
+[section two]
+blah = ...
+boom = "bum"
+shaka = "laka"
+#+end_src
+
+* System Configuration
+This section contains list of all the system (Ubuntu) packages, that I am using. 
+** at first
+
+#+begin_src shell :tangle no
+sudo apt-get install software-properties-common -y
+sudo apt-get install curl
+sudo apt-get install vim
+sudo apt-get install git
+sudo apt-get install gnome-tweaks
+#+end_src
+
+** latex
+
+#+begin_src shell :tangle no
+sudo apt-get install texlive-science
+sudo apt-get install texlive-latex-extra
+#+end_src
+
+** emacs
+
+#+begin_src shell :tangle no
+sudo apt-get install emacs
+sudo apt-get install fonts-firacode
+sudo apt-get install elpa-counsel
+sudo apt-get install ripgrep
+#+end_src
+
+Also (for my emacs configuration) it is important to install "Cantarell" font. Probably there is no apt-like package for it, but it can be downloaded from [[https://fonts.google.com/specimen/Cantarell][here]].
+
+** python (for version 3.10)
+
+#+begin_src shell :tangle no
+sudo apt-get install python3.10
+sudo apt-get install python3.10-distutils
+# make sure, that the pip is installed for the python3.10
+curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10
+# install language server for python (for emacs)
+pip3 install --upgrade pip setuptools
+python3.10 -m pip install python-lsp-server
+# install pyenv
+curl https://pyenv.run | bash
+#+end_src
+

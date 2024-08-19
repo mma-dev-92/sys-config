@@ -50,21 +50,21 @@
 ** Source Code in Org-Mode!
     The syntax is "#+begin_src <programming-language-mode>" + your code + "#+end_src".
 
-   #+begin_src python
-   def binary_search(arr: list[int], target: int) -> bool:
-       l, r = 0, len(arr) - 1
-       m = (r + l) // 2
-       while l < r:
-           if arr[m] < target:
-	       r = m
-	   elif arr[m] > target:
-	       l = m + 1
-	   else:
-	       return True
-	   m = (r + l) // 2
+#+begin_src python
+def binary_search(arr: list[int], target: int) -> bool:
+    l, r = 0, len(arr) - 1
+    m = (r + l) // 2
+    while l < r:
+        if arr[m] < target:
+            r = m
+        elif arr[m] > target:
+            l = m + 1
+        else:
+            return True
+        m = (r + l) // 2
 
-       return False
-   #+end_src
+    return False
+#+end_src
    
 ** TODO LISTS
     You can create a TODO Lists in Org-Mode. Just Create a bunch of headers and start them with TODO as shown
