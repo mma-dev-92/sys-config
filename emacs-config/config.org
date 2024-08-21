@@ -528,43 +528,43 @@ Usefull tips:
 #+end_src
 
 ** python-dev 
-*** general setup
+*** python-mode & lsp-mode configuration
 
 #+begin_src emacs-lisp
+;; Automatically use the correct Python interpreter from the activated virtual environment
+(defun mma/lsp-set-python-executable ()
+  (when (bound-and-true-p pyvenv-virtual-env)
+    (setq lsp-pylisp-python-executable-cmd
+          (concat pyvenv-virtual-env "/bin/python"))))
+
+;; configure python mode
 (use-package python-mode
   :ensure nil
   :hook
   (python-mode . lsp-deferred)
   :custom
-  (python-shell-interpreter "/usr/bin/python3.11"))
+  (python-shell-interpreter "/usr/bin/python3.11")
+  :config
+  (add-hook 'python-mode-hook #'my/lsp-set-python-executable))
 #+end_src
 
 #+RESULTS:
-| evil-collection-python-set-evil-shift-width | lsp-deferred | doom-modeline-env-setup-python |
+| blacken-mode | lsp-deferred | doom-modeline-env-setup-python |
 
-*** virtual envirnoment setup
+*** language server settings
 
 #+begin_src emacs-lisp
-;; virtual envirnoment management
-(use-package pyvenv
-  :config
-  (pyvenv-mode 1)
-  ;; Automatically activate the virtualenv if there's a .venv directory
-  (add-hook 'python-mode-hook
-            (lambda ()
-              (when (projectile-project-p)
-                (let ((venv-path (expand-file-name ".venv" (projectile-project-root))))
-                  (when (file-directory-p venv-path)
-                    (pyvenv-activate venv-path)))))))
 ;; force lsp-mode to run global pylsp server each time
 (setq lsp-pylsp-server-command "pylsp")
-;; but to use local python interpreter from the selected .venv
+
+;; use local python interpreter from the selected .venv
 (setq lsp-pylsp-python-executable-cmd "python")
 
 (use-package flycheck
   :config
-  (setq flycheck-python-pylint-executable (concat pyvenv-virtual-env "/bin/pylint"))
-  (setq flycheck-python-flake8-executable (concat pyvenv-virtual-env "/bin/flake8")))
+  (when (bound-and-true-p pyvenv-virtual-env)
+    (setq flycheck-python-pylint-executable (concat pyvenv-virtual-env "/bin/pylint"))
+    (setq flycheck-python-flake8-executable (concat pyvenv-virtual-env "/bin/flake8"))))
 
 (use-package blacken
   :hook (python-mode . blacken-mode))
@@ -576,10 +576,22 @@ Usefull tips:
   :after flycheck
   :init (setq flycheck-pycheckers-checkers '(pylint))
   :hook (flycheck-mode . flycheck-pycheckers-setup))
+
 #+end_src
 
 #+RESULTS:
 | flycheck-pycheckers-setup | flycheck-mode-set-explicitly | doom-modeline-update-flycheck-text | doom-modeline-update-flycheck-icon |
+
+*** pyvenv
+
+#+begin_src emacs-lisp
+;; virtual envirnoment management
+(use-package pyvenv
+  :config
+  (pyvenv-mode 1)
+  (setenv "WORKON_HOME" "~/Projects/venvs")
+)
+#+end_src
 
 * TODO Tramp mode
 * Tangling Configuration File
@@ -675,7 +687,7 @@ sudo apt-get install python3.11-venv
 curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
 # install language server for python (for emacs)
 pip3 install --upgrade pip setuptools
-python3.11 -m pip install python-lsp-server
+python3.11 -m pip install 'python-lsp-server[all]'
 # install pyenv
 curl https://pyenv.run | bash
 #+end_src
