@@ -1,12 +1,16 @@
 #+titlMy Emacs Configuration
 #+PROPERTY: header-args:emacs-lisp :tangle ~/Projects/sys-config/emacs-config/init.el
+#+PROPERTY: header-args:emacs-lisp :tangle ~/.emacs.d/init.el
+* Emacs Key Auth Issue
+- Download the *.tar file (gnu-elpa-keyring-update package) [[https://elpa.gnu.org/packages/gnu-elpa-keyring-update.html][here]].
+- Run "M-:" + "package-install-file" and provide the path to the downloaded *.tar file.
 * Setup Configuration File
 ** set path to the current file
 
 Provide abs path to this *.org file (important for auto-tangle-on-save).
 
 #+begin_src emacs-lisp
-(defvar mma/org-config-path "/home/maciek/Projects/sys-config/emacs-config/config.org")
+(defvar mma/org-config-path "~/Projects/sys-config/emacs-config/config.org")
 #+end_src
 
 #+RESULTS:
@@ -88,6 +92,12 @@ Set font sizes (probably it depends on your dpi).
 
 #+RESULTS:
 : t
+
+** full screen on start
+
+#+begin_src emacs-lisp
+(add-to-list 'default-frame-alist '(fullscreen . fullboth))
+#+end_src
 
 * Themes & Fonts
 ** fonts
@@ -481,7 +491,8 @@ This allows for the shortcuts for the source-code block insertion. For example t
 (use-package lsp-treemacs
   :after lsp)
 
-(use-package lsp-ivy)
+(use-package lsp-ivy
+  :commands lsp-ivy-workspace-symbol)
 #+end_src
 
 #+RESULTS:
@@ -525,27 +536,50 @@ Usefull tips:
   :hook
   (python-mode . lsp-deferred)
   :custom
-  (python-shell-interpreter "/usr/bin/python3.10"))
+  (python-shell-interpreter "/usr/bin/python3.11"))
 #+end_src
+
+#+RESULTS:
+| evil-collection-python-set-evil-shift-width | lsp-deferred | doom-modeline-env-setup-python |
 
 *** virtual envirnoment setup
 
 #+begin_src emacs-lisp
 ;; virtual envirnoment management
 (use-package pyvenv
-  :ensure t
   :config
-  (pyvenv-mode 1))
-
+  (pyvenv-mode 1)
+  ;; Automatically activate the virtualenv if there's a .venv directory
+  (add-hook 'python-mode-hook
+            (lambda ()
+              (when (projectile-project-p)
+                (let ((venv-path (expand-file-name ".venv" (projectile-project-root))))
+                  (when (file-directory-p venv-path)
+                    (pyvenv-activate venv-path)))))))
 ;; force lsp-mode to run global pylsp server each time
 (setq lsp-pylsp-server-command "pylsp")
 ;; but to use local python interpreter from the selected .venv
 (setq lsp-pylsp-python-executable-cmd "python")
 
+(use-package flycheck
+  :config
+  (setq flycheck-python-pylint-executable (concat pyvenv-virtual-env "/bin/pylint"))
+  (setq flycheck-python-flake8-executable (concat pyvenv-virtual-env "/bin/flake8")))
+
+(use-package blacken
+  :hook (python-mode . blacken-mode))
+
+(use-package py-isort
+  :hook (before-save . py-isort-before-save))
+
+(use-package flycheck-pycheckers
+  :after flycheck
+  :init (setq flycheck-pycheckers-checkers '(pylint))
+  :hook (flycheck-mode . flycheck-pycheckers-setup))
 #+end_src
 
 #+RESULTS:
-| mma/activate-venv-in-shell | (lambda nil (display-line-numbers-mode 0)) |
+| flycheck-pycheckers-setup | flycheck-mode-set-explicitly | doom-modeline-update-flycheck-text | doom-modeline-update-flycheck-icon |
 
 * TODO Tramp mode
 * Tangling Configuration File
@@ -565,7 +599,7 @@ The ~:mkdirp yes~ is allowing to create all the parent directories (if they do n
 
 #+begin_src emacs-lisp :tangle no
 (org-babel-tangle)
-(org-babel-tangle-file "~/Projects/sys-config/emacs-config/new-init.el")
+(org-babel-tangle-file "~/.emacs.d/init.el")
 #+end_src
 
 #+RESULTS:
@@ -631,16 +665,17 @@ sudo apt-get install ripgrep
 
 Also (for my emacs configuration) it is important to install "Cantarell" font. Probably there is no apt-like package for it, but it can be downloaded from [[https://fonts.google.com/specimen/Cantarell][here]].
 
-** python (for version 3.10)
+** python (for version 3.11)
 
 #+begin_src shell :tangle no
-sudo apt-get install python3.10
-sudo apt-get install python3.10-distutils
+sudo apt-get install python3.11
+sudo apt-get install python3.11-distutils
+sudo apt-get install python3.11-venv
 # make sure, that the pip is installed for the python3.10
-curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10
+curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
 # install language server for python (for emacs)
 pip3 install --upgrade pip setuptools
-python3.10 -m pip install python-lsp-server
+python3.11 -m pip install python-lsp-server
 # install pyenv
 curl https://pyenv.run | bash
 #+end_src

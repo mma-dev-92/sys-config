@@ -1,4 +1,4 @@
-(defvar mma/org-config-path "/home/maciek/Projects/sys-config/emacs-config/config.org")
+(defvar mma/org-config-path "/home/mmazurek/Projects/sys-config/emacs-config/config.org")
 
 (defvar mma/default-font-size 180)
 (defvar mma/documents-font-size 210)
@@ -51,6 +51,8 @@
     (require 'eshell-prompt-extras)
     (setq eshell-highlight-prompt t
           eshell-prompt-function 'epe-theme-lambda)))
+
+(add-hook 'window-setup-hook 'toggle-frame-maximized t)
 
 (set-face-attribute 'default nil :font "Fira Code Retina" :height mma/default-font-size)
 (set-face-attribute 'fixed-pitch nil :font "Fira Code Retina" :height mma/default-font-size)
