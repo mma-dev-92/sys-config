@@ -700,7 +700,14 @@ python3.11 -m pip install pylint black isort flake8
 # poetry - new, better package manager
 curl -sSL https://install.python-poetry.org | python3 -
 # install pyright language server (nodejs and npm required)
-sudo apt install nodejs npm
+# remove older versions of nodejs if installed
+sudo apt remove libnode-dev nodejs
+sudo apt autoremove
+sudo apt clean
+# install new version
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+# install pyright
 sudo npm install -g pyright
 sudo npm update -g pyright
 #+end_src
