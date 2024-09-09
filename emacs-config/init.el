@@ -1,4 +1,4 @@
-(defvar mma/org-config-path "/home/mmazurek/Projects/sys-config/emacs-config/config.org")
+(defvar mma/org-config-path "~/Projects/sys-config/emacs-config/config.org")
 
 (defvar mma/default-font-size 180)
 (defvar mma/documents-font-size 210)
@@ -52,7 +52,7 @@
     (setq eshell-highlight-prompt t
           eshell-prompt-function 'epe-theme-lambda)))
 
-(add-hook 'window-setup-hook 'toggle-frame-maximized t)
+(add-to-list 'default-frame-alist '(fullscreen . fullboth))
 
 (set-face-attribute 'default nil :font "Fira Code Retina" :height mma/default-font-size)
 (set-face-attribute 'fixed-pitch nil :font "Fira Code Retina" :height mma/default-font-size)
@@ -287,7 +287,8 @@
 (use-package lsp-treemacs
   :after lsp)
 
-(use-package lsp-ivy)
+(use-package lsp-ivy
+  :commands lsp-ivy-workspace-symbol)
 
 (use-package company
   :after lsp-mode
@@ -303,23 +304,51 @@
 (use-package company-box
   :hook (company-mode . company-box-mode))
 
+;; Automatically use the correct Python interpreter from the activated virtual environment
+(defun mma/lsp-set-python-executable ()
+  (when (bound-and-true-p pyvenv-virtual-env)
+    (setq lsp-pylisp-python-executable-cmd
+          (concat pyvenv-virtual-env "/bin/python"))))
+
+;; configure python mode
 (use-package python-mode
   :ensure nil
   :hook
   (python-mode . lsp-deferred)
   :custom
-  (python-shell-interpreter "/usr/bin/python3.10"))
-
-;; virtual envirnoment management
-(use-package pyvenv
-  :ensure t
+  (python-shell-interpreter "/usr/bin/python3.11")
   :config
-  (pyvenv-mode 1))
+  (add-hook 'python-mode-hook #'my/lsp-set-python-executable))
 
 ;; force lsp-mode to run global pylsp server each time
 (setq lsp-pylsp-server-command "pylsp")
-;; but to use local python interpreter from the selected .venv
+
+;; use local python interpreter from the selected .venv
 (setq lsp-pylsp-python-executable-cmd "python")
+
+(use-package flycheck
+  :config
+  (when (bound-and-true-p pyvenv-virtual-env)
+    (setq flycheck-python-pylint-executable (concat pyvenv-virtual-env "/bin/pylint"))
+    (setq flycheck-python-flake8-executable (concat pyvenv-virtual-env "/bin/flake8"))))
+
+(use-package blacken
+  :hook (python-mode . blacken-mode))
+
+(use-package py-isort
+  :hook (before-save . py-isort-before-save))
+
+(use-package flycheck-pycheckers
+  :after flycheck
+  :init (setq flycheck-pycheckers-checkers '(pylint))
+  :hook (flycheck-mode . flycheck-pycheckers-setup))
+
+;; virtual envirnoment management
+(use-package pyvenv
+  :config
+  (pyvenv-mode 1)
+  (setenv "WORKON_HOME" "~/Projects/venvs")
+)
 
 ;update dynamically given emacs *.el file on save to the path specified in the #+PROPERTY at the beginning of the file
 (defun mma/org-babel-tangle-config ()
