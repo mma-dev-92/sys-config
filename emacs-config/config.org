@@ -1,5 +1,4 @@
 #+titlMy Emacs Configuration
-#+PROPERTY: header-args:emacs-lisp :tangle ~/Projects/sys-config/emacs-config/init.el
 #+PROPERTY: header-args:emacs-lisp :tangle ~/.emacs.d/init.el
 * Emacs Key Auth Issue
 - Download the *.tar file (gnu-elpa-keyring-update package) [[https://elpa.gnu.org/packages/gnu-elpa-keyring-update.html][here]].
@@ -97,6 +96,19 @@ Set font sizes (probably it depends on your dpi).
 
 #+begin_src emacs-lisp
 (add-to-list 'default-frame-alist '(fullscreen . fullboth))
+#+end_src
+
+** text-scalling (with hydra)
+
+#+begin_src emacs-lisp
+(use-package hydra
+  :defer 1)
+
+(defhydra hydra-text-scale (:timeout 4)
+  "scale text"
+  ("j" text-scale-increase "in")
+  ("k" text-scale-decrease "out")
+  ("f" nil "finished" :exit t))
 #+end_src
 
 * Themes & Fonts
@@ -283,26 +295,6 @@ Set font sizes (probably it depends on your dpi).
 #+RESULTS:
 : t
 
-* Custom Namespace
-
-#+begin_src emacs-lisp
-(use-package general
-  :config
-  (general-evil-setup t)
-
-  (general-create-definer mma/leader-keys
-    :keymaps '(normal insert visual emacs)
-    :prefix "SPC"
-    :global-prefix "C-SPC")
-
-  (mma/leader-keys
-    "tt" '(counsel-load-theme :which-key "choose theme")
-    "ts" '(hydra-text-scale/body :which-key "scale text")))
-#+end_src
-
-#+RESULTS:
-: t
-
 * Org Mode
 ** org-mode setup
 
@@ -401,7 +393,7 @@ Set font sizes (probably it depends on your dpi).
 ;; unix like config *.ini files syntax support
 (push '("conf-unix" . conf-unix) org-src-lang-modes)
 ;; python command for evaluating python code blocks
-(setq org-babel-python-command "/usr/bin/python3.10")
+(setq org-babel-python-command "/usr/bin/python3.11")
 #+end_src
 
 #+RESULTS:
@@ -420,8 +412,6 @@ This allows for the shortcuts for the source-code block insertion. For example t
 (add-to-list 'org-structure-template-alist '("conf" . "src conf-unix"))
 #+end_src
 
-#+RESULTS:
-: ((conf . src conf-unix) (py . src python) (el . src emacs-lisp) (sh . src shell) (a . export ascii) (c . center) (C . comment) (e . example) (E . export) (h . export html) (l . export latex) (q . quote) (s . src) (v . verse))
 * Dev
 ** rainbow-delimiters
 
@@ -493,6 +483,11 @@ This allows for the shortcuts for the source-code block insertion. For example t
 
 (use-package lsp-ivy
   :commands lsp-ivy-workspace-symbol)
+  
+(use-package yasnippet
+  :ensure t
+  :config
+  (yas-global-mode 1))
 #+end_src
 
 #+RESULTS:
@@ -531,67 +526,78 @@ Usefull tips:
 *** python-mode & lsp-mode configuration
 
 #+begin_src emacs-lisp
-;; Automatically use the correct Python interpreter from the activated virtual environment
-(defun mma/lsp-set-python-executable ()
-  (when (bound-and-true-p pyvenv-virtual-env)
-    (setq lsp-pylisp-python-executable-cmd
-          (concat pyvenv-virtual-env "/bin/python"))))
-
-;; configure python mode
 (use-package python-mode
   :ensure nil
   :hook
   (python-mode . lsp-deferred)
   :custom
-  (python-shell-interpreter "/usr/bin/python3.11")
+  (python-shell-interpreter "/usr/bin/python3") ;; fallback interpreter
   :config
-  (add-hook 'python-mode-hook #'my/lsp-set-python-executable))
+  (add-hook 'python-mode-hook #'mma/lsp-set-python-executable)) ;; set Python executable for lsp-pylsp
 #+end_src
 
 #+RESULTS:
 | blacken-mode | lsp-deferred | doom-modeline-env-setup-python |
 
-*** language server settings
+*** virtual environments managment
+
+#+begin_src emacs-lisp
+;; virtual envirnoment management package (very, very usefull)
+(use-package pyvenv
+  :config
+  (pyvenv-mode 1))
+#+end_src
+
+*** python language server settings
 
 #+begin_src emacs-lisp
 ;; force lsp-mode to run global pylsp server each time
-(setq lsp-pylsp-server-command "pylsp")
-
-;; use local python interpreter from the selected .venv
-(setq lsp-pylsp-python-executable-cmd "python")
+;; (setq lsp-pylsp-server-command "pylsp")
+(use-package lsp-pyright
+  :ensure t
+  :hook (python-mode . (lambda ()
+                         (require 'lsp-pyright)
+                         (lsp-deferred))))
 
 (use-package flycheck
-  :config
-  (when (bound-and-true-p pyvenv-virtual-env)
-    (setq flycheck-python-pylint-executable (concat pyvenv-virtual-env "/bin/pylint"))
-    (setq flycheck-python-flake8-executable (concat pyvenv-virtual-env "/bin/flake8"))))
+   :config
+   (when (bound-and-true-p pyvenv-virtual-env)
+     ;; (setq flycheck-python-pylint-executable (concat pyvenv-virtual-env "bin/flake8"))
+     (setq flycheck-python-pylint-executable (concat pyvenv-virtual-env "bin/pylint"))
+     (setq flycheck-python-mypy-executable (concat pyvenv-virtual-env "bin/mypy"))))
 
-(use-package blacken
-  :hook (python-mode . blacken-mode))
+  (use-package blacken
+    :hook (python-mode . blacken-mode))
 
-(use-package py-isort
-  :hook (before-save . py-isort-before-save))
-
-(use-package flycheck-pycheckers
-  :after flycheck
-  :init (setq flycheck-pycheckers-checkers '(pylint))
-  :hook (flycheck-mode . flycheck-pycheckers-setup))
-
+  (use-package py-isort
+    :hook (before-save . py-isort-before-save))
 #+end_src
 
 #+RESULTS:
-| flycheck-pycheckers-setup | flycheck-mode-set-explicitly | doom-modeline-update-flycheck-text | doom-modeline-update-flycheck-icon |
+| py-isort-before-save |
 
-*** pyvenv
+* Custom Namespace
 
 #+begin_src emacs-lisp
-;; virtual envirnoment management
-(use-package pyvenv
+(use-package general
   :config
-  (pyvenv-mode 1)
-  (setenv "WORKON_HOME" "~/Projects/venvs")
-)
+  (general-evil-setup t)
+
+  (general-create-definer mma/leader-keys
+    :keymaps '(normal insert visual emacs)
+    :prefix "SPC"
+    :global-prefix "C-SPC")
+
+  (mma/leader-keys
+    "tt" '(counsel-load-theme :which-key "choose theme")
+    ;; hydra-text-scale is defined in the UI configuration section
+    "ts" '(hydra-text-scale/body :which-key "scale text")
+    ;; activate viritual envirnoment in PROJECT_ROOT/.venv
+    "v" '(mma/activate-project-venv :which-key "activate current .venv")))
 #+end_src
+
+#+RESULTS:
+: t
 
 * TODO Tramp mode
 * Tangling Configuration File
@@ -687,8 +693,15 @@ sudo apt-get install python3.11-venv
 curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
 # install language server for python (for emacs)
 pip3 install --upgrade pip setuptools
-python3.11 -m pip install 'python-lsp-server[all]'
 # install pyenv
 curl https://pyenv.run | bash
+# install dev tools
+python3.11 -m pip install pylint black isort flake8
+# poetry - new, better package manager
+curl -sSL https://install.python-poetry.org | python3 -
+# install pyright language server (nodejs and npm required)
+sudo apt install nodejs npm
+sudo npm install -g pyright
+sudo npm update -g pyright
 #+end_src
 
