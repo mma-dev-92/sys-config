@@ -165,6 +165,13 @@ Set font sizes (probably it depends on your dpi).
 
 #+RESULTS:
 
+* For Clean Folders
+
+#+begin_src emacs-lisp
+(setq make-backup-files nil)
+(setq auto-save-default nil)
+#+end_src
+
 * Navigation
 ** ivy
 
@@ -437,7 +444,8 @@ This allows for the shortcuts for the source-code block insertion. For example t
   :init
   (when (file-directory-p "~/Projects")
     (setq projectile-project-search-path '("~/Projects")))
-  (setq projectile-switch-project-action #'projectile-dired))
+  (setq projectile-switch-project-action #'projectile-dired)
+  (setq projectile-indexing-method 'alien))
 #+end_src
 
 ** projectile-counsel
@@ -503,7 +511,7 @@ Usefull tips:
   - for highlited line of code, if something is wrong (for example variable is never used), you can go ther with the cursor, the bulb symbol will appear in the minibuffer, press "C-c l a" to get the menu of the code actions, that can fix the problem
   - "C-c l = =" - "lsp-format-buffer" it will format the file (however probably *there are better options to format the code created as dedicated packages / linters for specific languages*)
   - "lsp-treemacs-symbols" command pops up the cirrent buffer code structure tree (it can be used to easily navigate throught the code)
-  - "lsp-treemacs" just opens the dir tree (after specifying the tree root)
+  - "lsp-treemacs" just opens the dir tree (after specifying the tree root
 ** company-mode (for nice autocompletion)
 
 #+begin_src emacs-lisp
@@ -546,25 +554,45 @@ Usefull tips:
 (use-package pyvenv
   :config
   (pyvenv-mode 1))
+
+(defun mma/update-python-environment ()
+  "Update both python-mode interpreter and lsp-pyright interpreter to match the current pyvenv.
+   Restart lsp-mode and python-mode if they are active to reflect the changes."
+  (if (bound-and-true-p pyvenv-virtual-env)
+      (let ((python-executable (concat pyvenv-virtual-env "/bin/python")))
+        ;; Update python-mode interpreter
+        (setq python-shell-interpreter python-executable)
+        ;; Update lsp-pyright interpreter
+        (setq lsp-pyright-python-executable-cmd python-executable)
+        (message "Python environment updated to: %s" python-executable))
+    ;; If no virtual environment is active, reset to the system default
+    (setq python-shell-interpreter "/usr/bin/python3")
+    (setq lsp-pyright-python-executable-cmd "/usr/bin/python3")
+    (message "No virtual environment active, using system Python."))
+
+  ;; Restart python-mode if it's active
+  (when (derived-mode-p 'python-mode)
+    (python-mode)
+    (message "Python mode restarted."))
+
+  ;; Restart lsp-mode if it's active
+  (when (bound-and-true-p lsp-mode)
+    (lsp-restart-workspace)
+    (message "LSP mode restarted.")))
+
+;; Hook to pyvenv activation and deactivation
+(add-hook 'pyvenv-post-activate-hooks #'mma/update-python-environment)
+(add-hook 'pyvenv-post-deactivate-hooks #'mma/update-python-environment)
 #+end_src
 
 *** python language server settings
 
 #+begin_src emacs-lisp
-;; force lsp-mode to run global pylsp server each time
-;; (setq lsp-pylsp-server-command "pylsp")
 (use-package lsp-pyright
   :ensure t
   :hook (python-mode . (lambda ()
                          (require 'lsp-pyright)
                          (lsp-deferred))))
-
-(use-package flycheck
-   :config
-   (when (bound-and-true-p pyvenv-virtual-env)
-     ;; (setq flycheck-python-pylint-executable (concat pyvenv-virtual-env "bin/flake8"))
-     (setq flycheck-python-pylint-executable (concat pyvenv-virtual-env "bin/pylint"))
-     (setq flycheck-python-mypy-executable (concat pyvenv-virtual-env "bin/mypy"))))
 
   (use-package blacken
     :hook (python-mode . blacken-mode))
@@ -575,6 +603,32 @@ Usefull tips:
 
 #+RESULTS:
 | py-isort-before-save |
+
+*** ignore python related non-source code files in treemacs
+
+#+begin_src emacs-lisp
+;; treemacs files
+(with-eval-after-load 'treemacs
+  (defun mma/treemacs-ignore-python-files (filename absolute-path)
+    "Ignore Python-related files and Emacs backup/autosave files in Treemacs."
+    (or
+     ;; Ignore __pycache__ directory
+     (string-equal filename "__pycache__")
+     ;; Ignore compiled Python bytecode files
+     (string-suffix-p ".pyc" filename)
+     (string-suffix-p ".pyo" filename)
+     ;; Ignore Python cache and metadata directories
+     (string-suffix-p ".egg-info" filename)
+     (string-equal filename ".pytest_cache")
+     (string-equal filename ".mypy_cache")
+     ;; Ignore Emacs backup and autosave files
+     (string-suffix-p "~" filename)
+     ;; Correct escaping for autosave files
+     (string-match-p "^#.*#$" filename)))
+
+  ;; Add the predicate to Treemacs' ignored file predicates list
+  (add-to-list 'treemacs-ignored-file-predicates #'mma/treemacs-ignore-python-files))
+#+end_src
 
 * Custom Namespace
 
