@@ -541,7 +541,11 @@ Usefull tips:
   :custom
   (python-shell-interpreter "/usr/bin/python3") ;; fallback interpreter
   :config
-  (add-hook 'python-mode-hook #'mma/lsp-set-python-executable)) ;; set Python executable for lsp-pylsp
+  ;; save each file 
+  (add-hook 'python-mode-hook
+            (lambda ()
+              (setq-local auto-save-visited-interval 1) ;; Save every 1 second of idle time
+              (auto-save-visited-mode 2))))
 #+end_src
 
 #+RESULTS:
