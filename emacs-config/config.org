@@ -496,6 +496,8 @@ This allows for the shortcuts for the source-code block insertion. For example t
   (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
   (lsp-headerline-breadcrumb-mode))
 
+(require 'xref)
+
 (use-package lsp-mode
   :commands (lsp lsp-deferred)
   :hook (lsp-mode . mma/lsp-mode-setup)
