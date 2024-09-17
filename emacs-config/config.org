@@ -426,6 +426,29 @@ This allows for the shortcuts for the source-code block insertion. For example t
 ;If any programming language mode starts (prog-mode), enable rainbow mode
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
+
+(use-package smartparens
+  :hook (prog-mode . smartparens-mode)
+  :config
+  ;; Load default smartparens configurations
+  (require 'smartparens-config)
+  
+  ;; Enable smartparens-strict-mode for strict pairing
+  (smartparens-strict-mode 1)
+  
+  ;; Optionally, disable pairing of single quotes in certain modes
+  ;; (sp-pair "'" nil :actions :rem)
+
+  ;; Add your sp-local-pair configurations here
+  (sp-local-pair 'python-mode "(" nil :post-handlers
+                 '(:add
+                   ("||\n[i]" "RET")))
+  (sp-local-pair 'python-mode "[" nil :post-handlers
+                 '(:add
+                   ("||\n[i]" "RET")))
+  (sp-local-pair 'python-mode "{" nil :post-handlers
+                 '(:add
+                   ("||\n[i]" "RET"))))
 #+end_src
 
 #+RESULTS:
@@ -496,6 +519,9 @@ This allows for the shortcuts for the source-code block insertion. For example t
   :ensure t
   :config
   (yas-global-mode 1))
+
+(use-package yasnippet-snippets
+  :after yasnippet)
 #+end_src
 
 #+RESULTS:
@@ -516,15 +542,18 @@ Usefull tips:
 
 #+begin_src emacs-lisp
 (use-package company
-  :after lsp-mode
+  :after (lsp-mode yasnippet)
   :hook (prog-mode . company-mode)
   :bind (:map company-active-map
-         ("<tab>" . company-complete-selection))
-        (:map lsp-mode-map
-         ("<tab>" . company-indent-or-complete-common))
+      ("<tab>" . company-complete-selection)
+      :map lsp-mode-map
+      ("<tab>" . company-indent-or-complete-common))
   :custom
   (company-minimum-prefix-length 1)
-  (company-idle-delay 0.0))
+  (company-idle-delay 0.0)
+  :config
+  ;; Ensure that company uses yasnippet for completions
+  (add-to-list 'company-backends 'company-yasnippet))
   
 (use-package company-box
   :hook (company-mode . company-box-mode))
@@ -546,6 +575,8 @@ Usefull tips:
             (lambda ()
               (setq-local auto-save-visited-interval 1) ;; Save every 1 second of idle time
               (auto-save-visited-mode 2))))
+
+(add-hook 'python-mode-hook 'yas-minor-mode)
 #+end_src
 
 #+RESULTS:
