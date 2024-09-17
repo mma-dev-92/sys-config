@@ -491,39 +491,49 @@ This allows for the shortcuts for the source-code block insertion. For example t
 ** lsp-mode (language servers)
 
 #+begin_src emacs-lisp
-;; show nav at the top of each project file
-(defun mma/lsp-mode-setup ()
-  (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
-  (lsp-headerline-breadcrumb-mode))
 
-(require 'xref)
+  ;; show nav at the top of each project file
+  (defun mma/lsp-mode-setup ()
+      (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
+      (lsp-headerline-breadcrumb-mode))
 
-(use-package lsp-mode
-  :commands (lsp lsp-deferred)
-  :hook (lsp-mode . mma/lsp-mode-setup)
-  :init
-  (setq lsp-keymap-prefix "C-c l")
-  :config
-  (lsp-enable-which-key-integration t))
+  (require 'xref)
 
-(use-package lsp-ui
-  :hook (lsp-mode . lsp-ui-mode)
-  :init
-  :custom (lsp-ui-doc-position 'bottom))
+  (use-package lsp-mode
+      :commands (lsp lsp-deferred)
+      :hook (lsp-mode . mma/lsp-mode-setup)
+      :init
+      (setq lsp-keymap-prefix "C-c l")
+      :config
+      (lsp-enable-which-key-integration t))
 
-(use-package lsp-treemacs
-  :after lsp)
+  (use-package lsp-ui
+      :hook (lsp-mode . lsp-ui-mode)
+      :init
+      :custom (lsp-ui-doc-position 'bottom))
 
-(use-package lsp-ivy
-  :commands lsp-ivy-workspace-symbol)
+  (use-package lsp-treemacs
+      :after lsp)
+
+  (use-package lsp-ivy
+      :after (lsp-mode ivy)
+      :commands lsp-ivy-workspace-symbol)
+
+  (use-package ivy-xref
+      :ensure t
+      :init
+      (setq xref-show-xrefs-function #'ivy-xref-show-xrefs))
   
-(use-package yasnippet
-  :ensure t
-  :config
-  (yas-global-mode 1))
+  (setq lsp-prefer-xref t)
 
-(use-package yasnippet-snippets
-  :after yasnippet)
+  (use-package yasnippet
+      :ensure t
+      :config
+      (yas-global-mode 1))
+
+  (use-package yasnippet-snippets
+      :after yasnippet)
+
 #+end_src
 
 #+RESULTS:
@@ -729,47 +739,46 @@ Those two commands above will tangle all the files to the file with a given file
 (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'mma/org-babel-tangle-config)))
 #+end_src
 
-* Other Applications
-** Some App
-I can have not only my emacs config in one org-mode file, but also other configuration files (other *.ini files in my system). Below I am using the ~:tangle~ parameter with path where the code block should be tangled + by ~mkdrip yes~ I am saying: "even if there is no such path as the path specified in the ~:tangle~ parameter, please create it for me (even if you have to create parent directories).
-
-#+begin_src conf-unix :tangle no
-[section one]
-val1=32
-val2=45
-
-[section two]
-blah = ...
-boom = "bum"
-shaka = "laka"
-#+end_src
-
 * System Configuration
-This section contains list of all the system (Ubuntu) packages, that I am using. 
 ** at first
 
 #+begin_src shell :tangle no
-sudo apt-get install software-properties-common -y
-sudo apt-get install curl
-sudo apt-get install vim
-sudo apt-get install git
-sudo apt-get install gnome-tweaks
+
+  sudo apt-get install software-properties-common -y
+  sudo apt-get install curl
+  sudo apt-get install vim
+  sudo apt-get install git
+  sudo apt-get install gnome-tweaks
+
 #+end_src
 
 ** latex
 
 #+begin_src shell :tangle no
-sudo apt-get install texlive-science
-sudo apt-get install texlive-latex-extra
+
+  sudo apt-get install texlive-science
+  sudo apt-get install texlive-latex-extra
+
 #+end_src
 
-** emacs
+** emacs 28 instalation (tested on ubuntu 22.04.5 LTS)
 
 #+begin_src shell :tangle no
-sudo apt-get install emacs
-sudo apt-get install fonts-firacode
-sudo apt-get install elpa-counsel
-sudo apt-get install ripgrep
+
+  sudo add-apt-repository ppa:kelleyk/emacs
+  sudo apt update
+  sudo apt install emacs28
+
+#+end_src
+
+** install third-party packages for my emacs configuration
+
+#+begin_src shell
+
+  sudo apt-get install fonts-firacode
+  sudo apt-get install elpa-counsel
+  sudo apt-get install ripgrep
+
 #+end_src
 
 Also (for my emacs configuration) it is important to install "Cantarell" font. Probably there is no apt-like package for it, but it can be downloaded from [[https://fonts.google.com/specimen/Cantarell][here]].
@@ -777,29 +786,31 @@ Also (for my emacs configuration) it is important to install "Cantarell" font. P
 ** python (for version 3.11)
 
 #+begin_src shell :tangle no
-sudo apt-get install python3.11
-sudo apt-get install python3.11-distutils
-sudo apt-get install python3.11-venv
-# make sure, that the pip is installed for the python3.10
-curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
-# install language server for python (for emacs)
-pip3 install --upgrade pip setuptools
-# install pyenv
-curl https://pyenv.run | bash
-# install dev tools
-python3.11 -m pip install pylint black isort flake8
-# poetry - new, better package manager
-curl -sSL https://install.python-poetry.org | python3 -
-# install pyright language server (nodejs and npm required)
-# remove older versions of nodejs if installed
-sudo apt remove libnode-dev nodejs
-sudo apt autoremove
-sudo apt clean
-# install new version
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs
-# install pyright
-sudo npm install -g pyright
-sudo npm update -g pyright
+
+  sudo apt-get install python3.11
+  sudo apt-get install python3.11-distutils
+  sudo apt-get install python3.11-venv
+  # make sure, that the pip is installed for the python3.10
+  curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
+  # install language server for python (for emacs)
+  pip3 install --upgrade pip setuptools
+  # install pyenv
+  curl https://pyenv.run | bash
+  # install dev tools
+  python3.11 -m pip install pylint black isort flake8
+  # poetry - new, better package manager
+  curl -sSL https://install.python-poetry.org | python3 -
+  # install pyright language server (nodejs and npm required)
+  # remove older versions of nodejs if installed
+  sudo apt remove libnode-dev nodejs
+  sudo apt autoremove
+  sudo apt clean
+  # install new version
+  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+  sudo apt install -y nodejs
+  # install pyright
+  sudo npm install -g pyright
+  sudo npm update -g pyright
+
 #+end_src
 
