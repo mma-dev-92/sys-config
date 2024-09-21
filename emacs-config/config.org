@@ -1,4 +1,5 @@
 #+titlMy Emacs Configuration
+#+STARTUP: ovierview
 #+PROPERTY: header-args:emacs-lisp :tangle ~/.emacs.d/init.el
 * Emacs Key Auth Issue
 - Download the *.tar file (gnu-elpa-keyring-update package) [[https://elpa.gnu.org/packages/gnu-elpa-keyring-update.html][here]].
@@ -672,6 +673,108 @@ Usefull tips:
 
   ;; Add the predicate to Treemacs' ignored file predicates list
   (add-to-list 'treemacs-ignored-file-predicates #'mma/treemacs-ignore-python-files))
+#+end_src
+
+*** unit tests
+
+#+begin_src emacs-lisp
+;; Ensure pytest.el is installed
+(use-package pytest
+  :ensure t)
+
+;; Custom function to format the pytest output in an Org-mode-like structure
+(defun my/pytest-org-mode-format ()
+  "Run pytest and format the results in an Org-mode-like structure with clickable links, ANSI color support, and project name in the title."
+  (interactive)
+  (let* ((pytest-output-buffer (get-buffer-create "*Pytest Raw Output*"))
+         (org-buffer (get-buffer-create "*Pytest Org Output*"))
+         (project-name (if (bound-and-true-p projectile-mode)
+                           (projectile-project-name)
+                         "Unknown Project")))
+    
+    ;; Run pytest and capture the output in a temporary buffer (with color enabled)
+    (with-current-buffer pytest-output-buffer
+      (erase-buffer)
+      (call-process "pytest" nil pytest-output-buffer nil "-v" "--tb=short" "--color=yes"))
+    
+    ;; Apply ANSI color interpretation
+    (with-current-buffer pytest-output-buffer
+      (ansi-color-apply-on-region (point-min) (point-max)))
+    
+    ;; Switch to the buffer where we will format the output
+    (with-current-buffer org-buffer
+      (erase-buffer)
+      ;; Insert title with project name
+      (insert (format "#+TITLE: Pytest Results for Project: %s\n\n" project-name))
+      (insert "* Test Results\n\n"))
+    
+    ;; Parse the pytest output and transform it into an Org-mode-like structure
+    (with-current-buffer pytest-output-buffer
+      (goto-char (point-min))
+      (while (re-search-forward "^\\(tests/.*\\)::\\(.*\\) \\(PASSED\\|FAILED\\|ERROR\\)" nil t)
+        (let ((test-file (match-string 1))
+              (test-name (match-string 2))
+              (test-status (match-string 3)))
+          (with-current-buffer org-buffer
+            ;; Create a link to the file and line number
+            (insert (format "** [[file:%s::1][%s]]\n" test-file test-file))  ;; Module/filename header
+            (insert (format "*** [[file:%s::1][%s]] [%s]\n" test-file test-name test-status))))))  ;; Test name with status
+
+    ;; Now capture detailed error tracebacks
+    (with-current-buffer pytest-output-buffer
+      (goto-char (point-min))
+      (while (re-search-forward "^_+ ERROR at setup of \\(.*\\)$" nil t)
+        (let ((test-name (match-string 1)))
+          (with-current-buffer org-buffer
+            (insert (format "**** Error in test: %s\n" test-name)))
+          ;; Grab the next few lines which contain the traceback
+          (forward-line 1)
+          (while (and (not (looking-at "^_+")) (not (eobp)))
+            (let ((error-line (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
+              ;; Check if it's a file path and line number (link it)
+              (if (string-match "^\\([^:\n]+\\):\\([0-9]+\\)" error-line)
+                  (let ((file (match-string 1 error-line))
+                        (line (match-string 2 error-line)))
+                    (with-current-buffer org-buffer
+                      (insert (format "     [[file:%s::%s][%s:%s]]\n" file line file line))))
+                ;; If not, just insert the line
+                (with-current-buffer org-buffer
+                  (insert (format "     %s\n" error-line)))))
+            (forward-line 1)))))
+
+    ;; Switch to the org-mode formatted buffer
+    (switch-to-buffer org-buffer)
+    (org-mode)
+    (outline-hide-sublevels 1)))
+
+;; Wrapper functions around pytest commands to trigger my/pytest-org-mode-format
+
+(defun my/pytest-run-all ()
+  "Run all pytest tests and format the results in Org-mode."
+  (interactive)
+  (pytest-all)
+  (my/pytest-org-mode-format))
+
+(defun my/pytest-run-file ()
+  "Run pytest tests for the current file and format the results in Org-mode."
+  (interactive)
+  (pytest-file)
+  (my/pytest-org-mode-format))
+
+(defun my/pytest-run-one ()
+  "Run pytest for the test at point and format the results in Org-mode."
+  (interactive)
+  (pytest-one)
+  (my/pytest-org-mode-format))
+
+;; Rebind the test commands to use the custom Org-mode formatting
+(global-set-key (kbd "C-c t a") 'my/pytest-run-all)       ;; Run all tests
+(global-set-key (kbd "C-c t f") 'my/pytest-run-file)      ;; Run tests in current file
+(global-set-key (kbd "C-c t .") 'my/pytest-run-one)       ;; Run test at point
+(global-set-key (kbd "C-c t r") 'pytest-repeat)           ;; Re-run last test
+(global-set-key (kbd "C-c t n") 'next-error)              ;; Jump to next test failure
+(global-set-key (kbd "C-c t p") 'previous-error)          ;; Jump to previous test failure
+
 #+end_src
 
 * Custom Namespace
