@@ -331,25 +331,26 @@ Set font sizes (probably it depends on your dpi).
 ** org
 
 #+begin_src emacs-lisp
-(use-package org
-  :hook (org-mode . mma/org-mode-setup)
-  :hook (org-mode . mma/org-bullet-list-setup)
-  :config
-  (setq org-ellipsis " ▾"
-	org-hide-emphasis-markers nil) ;can hide the * for bold text, ~ for the code, ... it can get messy
-  (setq org-agenda-start-with-log-mode t) ;it will present a log of all tasks I am working today
-  (setq org-log-done 'time) ;it will track the time, when the task was switched to "DONE" (C-c C-t)
-  (setq org-log-into-drawer t) ;it will show the log of the task state evolution (in org-agenda-list)
-  (setq org-agenda-files
-	'("~/Projects/sys-config/emacs-config/org-files/tasks.org"))
+  (use-package org
+    :hook (org-mode . mma/org-mode-setup)
+    :hook (org-mode . mma/org-bullet-list-setup)
+    :config
+    (setq org-ellipsis " ▾"
+          org-hide-emphasis-markers nil) ;can hide the * for bold text, ~ for the code, ... it can get messy
+    (setq org-agenda-start-with-log-mode t) ;it will present a log of all tasks I am working today
+    (setq org-log-done 'time) ;it will track the time, when the task was switched to "DONE" (C-c C-t)
+    (setq org-log-into-drawer t) ;it will show the log of the task state evolution (in org-agenda-list)
+    (setq org-agenda-files
+          '("~/Projects/sys-config/emacs-config/org-files/tasks.org"))
 
-  (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
-  (set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
-  (set-face-attribute 'org-table nil   :inherit '(shadow fixed-pitch))
-  (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
-  (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
-  (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
-  (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
+    (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
+    (set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-table nil   :inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
+    (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
+    (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch)
+    (setq org-format-latex-options (plist-put org-format-latex-options :scale 2.0)))
 #+end_src
 
 #+RESULTS:
@@ -422,6 +423,8 @@ This allows for the shortcuts for the source-code block insertion. For example t
 (add-to-list 'org-structure-template-alist '("conf" . "src conf-unix"))
 #+end_src
 
+* CSV Files
+figure it out
 * Dev
 ** rainbow-delimiters
 
@@ -556,6 +559,38 @@ Usefull tips:
   - "C-c l = =" - "lsp-format-buffer" it will format the file (however probably *there are better options to format the code created as dedicated packages / linters for specific languages*)
   - "lsp-treemacs-symbols" command pops up the cirrent buffer code structure tree (it can be used to easily navigate throught the code)
   - "lsp-treemacs" just opens the dir tree (after specifying the tree root
+** dap-mode (debugging)
+
+#+begin_src emacs-lisp
+  (use-package dap-mode
+    :ensure t
+    :after lsp-mode
+    :config
+    ;; Set up dap for Python
+    (require 'dap-python)
+    (setq dap-python-debugger 'debugpy)   ;; Use debugpy as the debugger
+
+    ;; Enable dap-ui for visual debugger controls
+    (dap-ui-mode)
+    (dap-ui-controls-mode))
+
+  (use-package dap-python
+    :ensure nil  ;; dap-python comes with dap-mode
+    :after (dap-mode)
+    :config
+    ;; Use pytest as the default test runner
+    (setq dap-python-default-test-runner "pytest"))
+
+  (global-set-key (kbd "C-c d t") 'dap-python-debug-test-at-point) ;; Debug test at point
+  (global-set-key (kbd "C-c d m") 'dap-python-debug-module)        ;; Debug current module
+  (global-set-key (kbd "C-c d b") 'dap-breakpoint-toggle)          ;; Setting a breakpoint
+  (global-set-key (kbd "C-c d r") 'dap-ui-repl)                    ;; Open REPL for debbug
+
+  ;; Automatically open the debug UI when debugging starts
+  (add-hook 'dap-stopped-hook
+          (lambda (arg) (call-interactively #'dap-hydra)))
+#+end_src
+
 ** company-mode (for nice autocompletion)
 
 #+begin_src emacs-lisp
@@ -596,44 +631,6 @@ Usefull tips:
 
 #+RESULTS:
 | blacken-mode | lsp-deferred | doom-modeline-env-setup-python |
-
-*** virtual environments managment
-
-#+begin_src emacs-lisp
-;; virtual envirnoment management package (very, very usefull)
-(use-package pyvenv
-  :config
-  (pyvenv-mode 1))
-
-(defun mma/update-python-environment ()
-  "Update both python-mode interpreter and lsp-pyright interpreter to match the current pyvenv.
-   Restart lsp-mode and python-mode if they are active to reflect the changes."
-  (if (bound-and-true-p pyvenv-virtual-env)
-      (let ((python-executable (concat pyvenv-virtual-env "/bin/python")))
-        ;; Update python-mode interpreter
-        (setq python-shell-interpreter python-executable)
-        ;; Update lsp-pyright interpreter
-        (setq lsp-pyright-python-executable-cmd python-executable)
-        (message "Python environment updated to: %s" python-executable))
-    ;; If no virtual environment is active, reset to the system default
-    (setq python-shell-interpreter "/usr/bin/python3")
-    (setq lsp-pyright-python-executable-cmd "/usr/bin/python3")
-    (message "No virtual environment active, using system Python."))
-
-  ;; Restart python-mode if it's active
-  (when (derived-mode-p 'python-mode)
-    (python-mode)
-    (message "Python mode restarted."))
-
-  ;; Restart lsp-mode if it's active
-  (when (bound-and-true-p lsp-mode)
-    (lsp-restart-workspace)
-    (message "LSP mode restarted.")))
-
-;; Hook to pyvenv activation and deactivation
-(add-hook 'pyvenv-post-activate-hooks #'mma/update-python-environment)
-(add-hook 'pyvenv-post-deactivate-hooks #'mma/update-python-environment)
-#+end_src
 
 *** python language server settings
 
@@ -678,6 +675,46 @@ Usefull tips:
 
   ;; Add the predicate to Treemacs' ignored file predicates list
   (add-to-list 'treemacs-ignored-file-predicates #'mma/treemacs-ignore-python-files))
+#+end_src
+
+*** virtual environments managment
+
+#+begin_src emacs-lisp
+  ;; virtual envirnoment management package (very, very usefull)
+  (use-package pyvenv
+    :config
+    (pyvenv-mode 1))
+
+  (defun mma/update-python-environment ()
+    "Update both python-mode interpreter and lsp-pyright interpreter to match the current pyvenv.
+     Restart lsp-mode and python-mode if they are active to reflect the changes."
+    (if (bound-and-true-p pyvenv-virtual-env)
+        (let ((python-executable (concat pyvenv-virtual-env "/bin/python")))
+          ;; Update python-mode interpreter
+          (setq python-shell-interpreter python-executable)
+          ;; Update lsp-pyright interpreter
+          (setq lsp-pyright-python-executable-cmd python-executable)
+	     ;; Update dap-mode debugger interpreter
+          (setq dap-python-executable python-executable)
+          (message "Python environment updated to: %s" python-executable))
+      ;; If no virtual environment is active, reset to the system default
+      (setq python-shell-interpreter "/usr/bin/python3")
+      (setq lsp-pyright-python-executable-cmd "/usr/bin/python3")
+      (message "No virtual environment active, using system Python."))
+
+    ;; Restart python-mode if it's active
+    (when (derived-mode-p 'python-mode)
+      (python-mode)
+      (message "Python mode restarted."))
+
+    ;; Restart lsp-mode if it's active
+    (when (bound-and-true-p lsp-mode)
+      (lsp-restart-workspace)
+      (message "LSP mode restarted.")))
+
+  ;; Hook to pyvenv activation and deactivation
+  (add-hook 'pyvenv-post-activate-hooks #'mma/update-python-environment)
+  (add-hook 'pyvenv-post-deactivate-hooks #'mma/update-python-environment)
 #+end_src
 
 *** unit tests
@@ -729,6 +766,15 @@ Usefull tips:
   (global-set-key (kbd "C-c t r") 'pytest-repeat)    ;; Re-run last test
   (global-set-key (kbd "C-c t n") 'next-error)       ;; Jump to next test failure
   (global-set-key (kbd "C-c t p") 'previous-error)   ;; Jump to previous test failure
+
+#+end_src
+
+*** debugging
+To use dap-mode with pytest, make sure to specify tests root path in the ~pytest.ini~ file.
+#+begin_src conf-unix
+
+  [pytest]
+  testpaths = tests
 
 #+end_src
 
@@ -799,7 +845,6 @@ Those two commands above will tangle all the files to the file with a given file
 
   sudo apt-get install software-properties-common -y
   sudo apt-get install curl
-  sudo apt-get install vim
   sudo apt-get install git
   sudo apt-get install gnome-tweaks
 
